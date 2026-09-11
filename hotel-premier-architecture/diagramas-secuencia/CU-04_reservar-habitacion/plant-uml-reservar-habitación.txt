@@ -1,0 +1,86 @@
+
+@startuml
+
+
+
+title
+<size:28><color:#1F4E79><b>CU-04 | Reservar habitación </b></color></size>
+<size:12><color:#4A6A85>GRUPO 24 - DSI</color></size>
+end title
+
+skinparam backgroundColor #F2F4F7-#E9EEF3
+skinparam shadowing true
+skinparam defaultFontName Arial
+skinparam defaultFontSize 14
+skinparam defaultFontColor #2C3E50
+skinparam actor {
+  BackgroundColor #3498DB
+  BorderColor #1F618D
+  FontColor black
+  Style awesome
+}
+skinparam participant {
+  BackgroundColor #ECF0F1
+  BorderColor #7F8C8D
+  FontColor #2C3E50
+  BorderThickness 2
+  RoundCorner 20
+}
+skinparam sequence {
+  LifeLineBorderColor #2C3E50
+  LifeLineBackgroundColor #E8F6F3
+  LifeLineBorderThickness 2
+  ArrowColor #2C3E50
+  ArrowThickness 2
+}
+skinparam sequenceGroup {
+  BorderColor #1F618D
+  BackgroundColor #D6EAF8
+  FontColor #154360
+  FontSize 14
+}
+'====================================='
+actor Usuario
+participant "UI - Reservar Habitación" as UI
+participant "GestorReserva" as GestorReserva
+participant "ReservaDAO" as ReservaDAO
+Usuario -> UI : Solicita realizar una reserva
+UI -> Usuario : Muestra el estado de habitaciones (CU-05)
+Usuario -> UI : Selecciona habitaciones disponibles [{habitacion, fechaDesde, fechaHasta}]
+UI -> UI : Colorea habitaciones seleccionadas
+Usuario -> UI : Confirma selección
+UI -> Usuario : Muestra resumen de habitaciones seleccionadas: <list habitacionesSeleccionadas>
+Usuario -> UI : Confirma reserva
+alt Usuario rechaza confirmación de la reserva
+Usuario -> UI : Rechaza selección de habitaciones
+UI -> UI : Deshace operaciones en la grilla
+end
+ 
+alt Usuario decide cancelar
+  Usuario -> UI : Cancelar reserva
+  UI -> Usuario : Solcita confirmación (pop-up)
+  Usuario -> UI : Confirma cancelación
+  UI -> Usuario : Muestra cancelación exitosa
+end
+ 
+loop Ingreso de datos hasta ser válidos
+  UI -> Usuario: Muestra campos a completar del huésped
+  Usuario -> UI: Ingresa los datos del huésped
+  UI -> GestorReserva : crearReserva(huesped: HuespedDTO, acompanantes: list <PersonaDTO>, list <HabitacionDTO>)
+  GestorReserva -> ReservaDAO : crearReserva(Reserva)
+  ReservaDAO --> GestorReserva : Reserva
+  loop Crea detalle por habitacion
+  UI -> GestorReserva : crearDetalleReserva (<list HabitacionDTO>)
+  GestorReserva -> ReservaDAO : crearDetalleReserva(detalleReserva)
+  ReservaDAO --> GestorReserva : DetalleReserva
+  end
+        
+  alt Datos incompletos o inválidos
+    GestorReserva -> UI : mostrarError("Datos del huésped inválidos")
+            UI -> Usuario : Mostrar mensaje y permitir corrección
+        end
+            ReservaDAO --> GestorReserva : confirmaciónReserva (Reserva)
+            GestorReserva --> UI : confirmaciónReserva (Reserva)
+            UI -> Usuario : Mostrar confirmación de reserva
+    
+@enduml

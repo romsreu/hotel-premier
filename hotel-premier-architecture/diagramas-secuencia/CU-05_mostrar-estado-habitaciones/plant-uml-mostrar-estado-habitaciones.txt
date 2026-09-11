@@ -1,0 +1,84 @@
+@startuml
+title
+<size:28><color:#1F4E79><b>CU-05 | Mostrar Estado de Habitaciones</b></color></size>
+<size:12><color:#4A6A85>GRUPO 24 - DSI</color></size>
+end title
+skinparam backgroundColor #F2F4F7-#E9EEF3
+skinparam shadowing true
+skinparam defaultFontName Arial
+skinparam defaultFontSize 14
+skinparam defaultFontColor #2C3E50
+
+skinparam actor {
+  BackgroundColor #3498DB
+  BorderColor #1F618D
+  FontColor black
+  Style awesome
+}
+skinparam participant {
+  BackgroundColor #ECF0F1
+  BorderColor #7F8C8D
+  FontColor #2C3E50
+  BorderThickness 2
+  RoundCorner 20
+}
+skinparam sequence {
+  LifeLineBorderColor #2C3E50
+  LifeLineBackgroundColor #E8F6F3
+  LifeLineBorderThickness 2
+  ArrowColor #2C3E50
+  ArrowThickness 2
+}
+
+skinparam sequenceGroup {
+  BorderColor #1F618D
+  BackgroundColor #D6EAF8
+  FontColor #154360
+  FontSize 14
+}
+
+'====================================='
+
+actor Usuario
+participant "UI_EstadoHabs1" as UI1
+participant "UI_EstadoHabs2" as UI2
+participant "GestorHabitacion" as Gestor
+participant "HabitacionDAO" as HabDAO
+participant "EstadoHabitacionDAO" as EstadoDAO
+
+Usuario -> UI1 : Solicita ver estado de habitaciones
+
+UI1 -> Usuario : Muestra campos de fechas (desde/hasta)
+
+Usuario -> UI1 : Ingresa fechas y presiona "Mostrar"
+
+UI1 -> UI2 : Navega con fechas seleccionadas
+
+UI2 -> Gestor : listarTodasHabitaciones()
+Gestor -> HabDAO : listarTodas()
+HabDAO --> Gestor : List<Habitacion>
+Gestor --> UI2 : List<Habitacion>
+
+UI2 -> Gestor : obtenerEstadosEnRango(numeros, fechaInicio, fechaFin)
+Gestor -> EstadoDAO : obtenerEstadosEnRango(numeros, fechaInicio, fechaFin)
+EstadoDAO --> Gestor : Map<String, EstadoHab>
+Gestor --> UI2 : Map<String, EstadoHab>
+
+UI2 -> Usuario : Muestra grilla con estados coloreados
+
+alt Usuario hace clic en celda
+  Usuario -> UI2 : Click en celda
+  UI2 -> Usuario : Muestra información de la habitación
+end
+
+alt Usuario presiona "Volver"
+  Usuario -> UI2 : Presiona "Volver"
+  UI2 -> UI1 : Vuelve a selección de fechas
+end
+
+alt Usuario presiona "Cancelar"
+  Usuario -> UI2 : Presiona "Cancelar"
+  UI2 -> Usuario : Vuelve al menú principal
+end
+
+@enduml

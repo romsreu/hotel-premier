@@ -1,0 +1,78 @@
+@startuml
+title
+<size:28><color:#1F4E79><b>CU-09 | Dar alta de huésped</b></color></size>
+<size:12><color:#4A6A85>GRUPO 24 - DSI</color></size>
+end title
+skinparam backgroundColor #F2F4F7-#E9EEF3
+skinparam shadowing true
+skinparam defaultFontName Arial
+skinparam defaultFontSize 14
+skinparam defaultFontColor #2C3E50
+
+skinparam actor {
+  BackgroundColor #3498DB
+  BorderColor #1F618D
+  FontColor black
+  Style awesome
+}
+skinparam participant {
+  BackgroundColor #ECF0F1
+  BorderColor #7F8C8D
+  FontColor #2C3E50
+  BorderThickness 2
+  RoundCorner 20
+}
+skinparam sequence {
+  LifeLineBorderColor #2C3E50
+  LifeLineBackgroundColor #E8F6F3
+  LifeLineBorderThickness 2
+  ArrowColor #2C3E50
+  ArrowThickness 2
+}
+
+skinparam sequenceGroup {
+  BorderColor #1F618D
+  BackgroundColor #D6EAF8
+  FontColor #154360
+  FontSize 14
+}
+
+'====================================='
+
+actor Usuario
+participant "UI - Alta Huésped" as UI
+participant "GestorHuesped" as Gestor
+participant "HuespedDAO" as DAO
+
+Usuario -> UI : Solicita dar alta de huésped
+UI -> Usuario : Muestra interfaz para rellenar los campos del huésped
+
+loop Ingreso de datos hasta ser válidos
+    alt Usuario decide cancelar
+        Usuario -> UI : Cancelar operación
+        UI -> Usuario : Operación cancelada, volver al menú principal
+    else Usuario continúa
+        Usuario -> UI : ingresarDatosHuesped(HuespedDTO)
+        UI -> Gestor : validarDatosHuesped(HuespedDTO)
+
+        alt Datos incompletos o formato incorrecto
+            Gestor -> UI : mostrarError("Campos vacíos o formato inválido")
+            UI -> Usuario : Mostrar mensaje y permitir corrección
+        else Datos correctos y válidos
+            Gestor -> DAO : buscarHuesped(Huesped)
+            DAO --> Gestor : existe / noExiste: boolean
+
+            alt Huésped ya existe
+                Gestor -> UI : mostrarError("Huésped ya existe")
+                UI -> Usuario : Mostrar mensaje y permitir corrección
+            end
+        end
+    end
+end
+
+Gestor -> DAO : crearHuesped(Huesped)
+DAO --> Gestor : Huesped
+Gestor -> UI : mostrarConfirmación("Huésped dado de alta con éxito")
+UI -> Usuario : Mostrar confirmación
+@enduml
+

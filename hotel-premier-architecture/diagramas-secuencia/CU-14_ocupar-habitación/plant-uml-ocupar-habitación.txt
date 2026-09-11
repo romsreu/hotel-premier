@@ -1,0 +1,101 @@
+@startuml
+skinparam backgroundColor #F2F4F7-#E9EEF3
+skinparam shadowing true
+skinparam defaultFontName Arial
+skinparam defaultFontSize 14
+skinparam defaultFontColor #2C3E50
+skinparam actor {
+  BackgroundColor #3498DB
+  BorderColor #1F618D
+  FontColor black
+  Style awesome
+}
+skinparam participant {
+  BackgroundColor #ECF0F1
+  BorderColor #7F8C8D
+  FontColor #2C3E50
+  BorderThickness 2
+  RoundCorner 20
+}
+skinparam sequence {
+  LifeLineBorderColor #2C3E50
+  LifeLineBackgroundColor #E8F6F3
+  LifeLineBorderThickness 2
+  ArrowColor #2C3E50
+  ArrowThickness 2
+}
+skinparam sequenceGroup {
+  BorderColor #1F618D
+  BackgroundColor #D6EAF8
+  FontColor #154360
+  FontSize 14
+}
+ 
+title CU-15 | Ocupar Habitacion
+actor Conserje
+participant UI_OcuparHabitacion
+participant GestorHabitacion
+participant HabitacionDAO
+ 
+Conserje -> UI_OcuparHabitacion: Solicita ocupar habitacion
+UI_OcuparHabitacion -> Conserje: Muestra el estado de habitaciones (CU-05)
+alt No hay habitaciones disponibles para el rango de fechas solicitado
+UI_OcuparHabitacion -> Conserje : Vuelve al menú principal (CU finaliza)
+end
+loop Hasta que la selección sea válida
+Conserje -> UI_OcuparHabitacion: Selecciona habitacion y rango de fechas
+alt Habitacion seleccionada distinta de Disponible o reservada
+UI_OcuparHabitacion -> Conserje : Vuelve al inicio del loop
+end
+ 
+alt Habitacion seleccionada reservada
+UI_OcuparHabitacion -> Conserje :  informa en un mensaje que días y quién tiene la reserva
+Conserje -> UI_OcuparHabitacion: El usuario confirma
+UI_OcuparHabitacion -> Conserje : Se muestran los botones "Ocupar igual" y "Volver"
+  break El usuario presiona "Ocupar igual" 
+  end
+  alt El usuario presiona "Volver"
+  UI_OcuparHabitacion -> Conserje : Vuelve al inicio del loop
+  end
+end
+ 
+end
+
+UI_OcuparHabitacion -> UI_OcuparHabitacion : Se colorean las habitaciones ocupadas
+UI_OcuparHabitacion -> Conserje : Muestra pop-up "presione cualquier tecla para continuar"
+Conserje -> UI_OcuparHabitacion: Presiona cualquier tecla
+UI_OcuparHabitacion -> Conserje : Se presentan campos para cargar criterios de busqueda de un huesped o acompañante
+Conserje -> UI_OcuparHabitacion: Se llenan los campos solicitados
+UI_OcuparHabitacion -> GestorHuesped: buscarHuesped(huespedDTO)
+GestorHuesped -> HuespedDAO: buscarHuesped(Huesped)
+HuespedDAO -> GestorHuesped: list<Huesped>
+GestorHuesped -> UI_OcuparHabitacion: list<HuespedDTO>
+UI_OcuparHabitacion -> Conserje : Muestra una grilla con los datos de los huespedes encontrados
+
+alt Se presiona aceptar sin seleccionar un huesped
+UI_OcuparHabitacion -> Conserje: Se vuelve a mostrar la grilla con los datos de los huespedes encontrados
+end
+
+Conserje -> UI_OcuparHabitacion: Se selecciona el huesped y se presiona "Aceptar"
+UI_OcuparHabitacion -> Conserje: Se muestran los botones "Seguir cargando", "Cargar otra habitación" y "Salir"
+
+alt Se presiona "Seguir cargando"
+UI_OcuparHabitacion -> Conserje: Se vuelven a presentar campos para cargar criterios de busqueda de un huesped o acompañante
+end
+alt Se presiona "Cargar otra habitación"
+UI_OcuparHabitacion -> Conserje: Se vuelve a mostrar el estado de habitaciones (CU-05)
+end
+
+Conserje -> UI_OcuparHabitacion: Se presiona "Salir"
+UI_OcuparHabitacion -> GestorHabitacion: ocuparHabitacion(HabitacionDTO)
+GestorHabitacion -> HabitacionDAO: ocuparHabitacion(Habitacion)
+
+
+alt Usuario decide cancelar
+  Conserje -> UI_OcuparHabitacion : Cancelar reserva
+  UI_OcuparHabitacion -> Conserje : Solcita confirmación (pop-up)
+  Conserje -> UI_OcuparHabitacion : Confirma cancelación
+  UI_OcuparHabitacion -> Conserje : Muestra cancelación exitosa
+end
+
+@enduml

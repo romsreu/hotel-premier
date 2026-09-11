@@ -1,0 +1,88 @@
+@startuml
+title
+<size:28><color:#1F4E79><b>CU-09 | Dar alta de huésped</b></color></size>
+<size:12><color:#4A6A85>GRUPO 24 - DSI</color></size>
+end title
+skinparam backgroundColor #F2F4F7-#E9EEF3
+skinparam shadowing true
+skinparam defaultFontName Arial
+skinparam defaultFontSize 14
+skinparam defaultFontColor #2C3E50
+skinparam actor {
+  BackgroundColor #3498DB
+  BorderColor #1F618D
+  FontColor black
+  Style awesome
+}
+skinparam participant {
+  BackgroundColor #ECF0F1
+  BorderColor #7F8C8D
+  FontColor #2C3E50
+  BorderThickness 2
+  RoundCorner 20
+}
+skinparam sequence {
+  LifeLineBorderColor #2C3E50
+  LifeLineBackgroundColor #E8F6F3
+  LifeLineBorderThickness 2
+  ArrowColor #2C3E50
+  ArrowThickness 2
+}
+skinparam sequenceGroup {
+  BorderColor #1F618D
+  BackgroundColor #D6EAF8
+  FontColor #154360
+  FontSize 14
+}
+'====================================='
+actor Usuario
+participant "UI_AltaHuesped" as UI
+participant "GestorHuesped" as Gestor
+participant "HuespedDAO" as HuespedDAO
+participant "DireccionDAO" as DireccionDAO
+
+Usuario -> UI : Solicita dar alta de huésped
+
+UI -> Usuario : Muestra formulario con campos
+
+loop Hasta que los datos sean válidos
+    Usuario -> UI : Completa campos del formulario
+    
+    alt Datos incompletos o inválidos
+        UI -> Usuario : Muestra errores de validación
+    end
+end
+
+Usuario -> UI : Presiona "Siguiente"
+
+UI -> Gestor : cargar(DarAltaHuespedDTO)
+
+Gestor -> HuespedDAO : existePorDocumento(numeroDoc, tipoDoc)
+HuespedDAO --> Gestor : boolean
+
+alt Huésped ya existe
+    Gestor --> UI : Exception: "Ya existe huésped con ese documento"
+    UI -> Usuario : Muestra advertencia "DNI duplicado"
+else Huésped no existe
+    Gestor -> DireccionDAO : buscarPorDatos(direccion)
+    DireccionDAO --> Gestor : Direccion o null
+    
+    alt Dirección no existe
+        Gestor -> DireccionDAO : guardar(Direccion)
+        DireccionDAO --> Gestor : Direccion
+    end
+    
+    Gestor -> HuespedDAO : guardar(Huesped)
+    HuespedDAO --> Gestor : Huesped
+    
+    Gestor --> UI : Huesped
+    UI -> Usuario : Muestra confirmación de éxito
+    UI -> Usuario : Vuelve al menú principal
+end
+
+alt Usuario presiona "Cancelar"
+    Usuario -> UI : Presiona "Cancelar"
+    UI -> Usuario : Vuelve al menú principal
+end
+
+@enduml

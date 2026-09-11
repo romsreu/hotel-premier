@@ -1,0 +1,141 @@
+@startuml
+title
+<size:28><color:#1F4E79><b>CU-04 | Reservar habitación </b></color></size>
+<size:12><color:#4A6A85>GRUPO 24 - DSI</color></size>
+end title
+skinparam backgroundColor #F2F4F7-#E9EEF3
+skinparam shadowing true
+skinparam defaultFontName Arial
+skinparam defaultFontSize 14
+skinparam defaultFontColor #2C3E50
+skinparam actor {
+  BackgroundColor #3498DB
+  BorderColor #1F618D
+  FontColor black
+  Style awesome
+}
+skinparam participant {
+  BackgroundColor #ECF0F1
+  BorderColor #7F8C8D
+  FontColor #2C3E50
+  BorderThickness 2
+  RoundCorner 20
+}
+skinparam sequence {
+  LifeLineBorderColor #2C3E50
+  LifeLineBackgroundColor #E8F6F3
+  LifeLineBorderThickness 2
+  ArrowColor #2C3E50
+  ArrowThickness 2
+}
+skinparam sequenceGroup {
+  BorderColor #1F618D
+  BackgroundColor #D6EAF8
+  FontColor #154360
+  FontSize 14
+}
+'====================================='
+actor Usuario
+participant "UI_ReservarHab1" as UI1
+participant "UI_EstadoHabs" as UIEstado
+participant "UI_ReservarHab2" as UI2
+participant "GestorHuesped" as GestorH
+participant "GestorReserva" as GestorR
+participant "HuespedDAO" as HuespedDAO
+participant "ReservaDAO" as ReservaDAO
+
+Usuario -> UIEstado : Solicita realizar reserva
+UIEstado -> Usuario : Muestra estado de habitaciones (CU-05)
+
+Usuario -> UIEstado : Selecciona habitación(es) disponible(s) y fechas
+UIEstado -> UIEstado : Marca habitaciones seleccionadas
+UIEstado -> Usuario : Muestra habitaciones seleccionadas coloreadas
+alt Usuario deselecciona habitacion/es seleccionada/s
+  Usuario -> UIEstado: Quita selección
+  UIEstado -> UIEstado : Deselecciona
+end
+alt Usuario cancela
+  Usuario -> UIEstado : Presiona "Cancelar"
+  UIEstado -> Usuario : Vuelve al menú principal
+end
+Usuario -> UIEstado : Confirma selección
+
+
+
+
+UIEstado -> UI1 : Navega a resumen (pasa habitaciones seleccionadas)
+
+UI1 -> Usuario : Muestra resumen de habitaciones seleccionadas
+
+alt Usuario vuelve atrás
+  Usuario -> UI1 : Presiona "Volver"
+  UI1 -> UIEstado : Vuelve a selección de habitaciones
+end
+
+Usuario -> UI1 : Presiona "Aceptar"
+
+UI1 -> UI2 : Navega a datos del huésped
+
+UI2 -> Usuario : Muestra campos: nombre, apellido, teléfono
+
+loop Hasta ingresar datos válidos
+  Usuario -> UI2 : Ingresa nombre, apellido, teléfono
+  
+  alt Datos incompletos o inválidos
+    UI2 -> Usuario : Muestra error de validación
+  end
+end
+
+Usuario -> UI2 : Presiona "Confirmar"
+
+UI2 -> GestorH : buscarPorNombreApellido(nombre, apellido)
+GestorH -> HuespedDAO : buscarHuesped(HuespedDTO)
+HuespedDAO --> GestorH : List<Huesped>
+
+alt Huésped no encontrado
+  GestorH --> UI2 : Lista vacía
+  UI2 -> Usuario : Advertencia: debe registrar huésped primero
+  UI2 -> Usuario : Vuelve al menú principal
+else Huésped encontrado
+  GestorH --> UI2 : Huesped
+  
+  UI2 -> Usuario : Muestra confirmación con resumen completo
+  
+  Usuario -> UI2 : Confirma creación de reserva
+  
+  loop Por cada habitación seleccionada
+    UI2 -> GestorR : crearReserva(CrearReservaDTO)
+    
+    note right of GestorR
+      CrearReservaDTO contiene:
+      - idHuesped
+      - numeroHabitacion
+      - fechaInicio, fechaFin
+      - cantHuespedes
+      - descuento
+    end note
+    
+    GestorR -> GestorR : validarCrearReservaDTO(dto)
+    GestorR -> HuespedDAO : obtenerPorId(idHuesped)
+    HuespedDAO --> GestorR : Huesped
+    
+    GestorR -> ReservaDAO : crearReserva(CrearReservaDTO)
+    ReservaDAO -> ReservaDAO : Valida disponibilidad
+    ReservaDAO -> ReservaDAO : Crea entidad Reserva
+    ReservaDAO --> GestorR : Reserva
+    
+    GestorR -> GestorR : reservarHabitaciones(numeroHab, fechas)
+    
+    note right of GestorR
+      Cambia estado de DISPONIBLE 
+      a RESERVADA para el rango de fechas
+    end note
+    
+    GestorR --> UI2 : ReservaDTO
+  end
+  
+  UI2 -> Usuario : Muestra confirmación exitosa con detalles
+  UI2 -> Usuario : Vuelve al menú principal
+end
+
+@enduml

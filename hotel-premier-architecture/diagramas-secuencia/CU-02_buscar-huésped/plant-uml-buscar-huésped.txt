@@ -1,0 +1,70 @@
+@startuml
+title
+<size:28><color:#1F4E79><b>CU-02 | Buscar Huésped</b></color></size>
+<size:12><color:#4A6A85>GRUPO 24 - DSI</color></size>
+end title
+skinparam backgroundColor #F2F4F7-#E9EEF3
+skinparam shadowing true
+skinparam defaultFontName Arial
+skinparam defaultFontSize 14
+skinparam defaultFontColor #2C3E50
+
+skinparam actor {
+  BackgroundColor #3498DB
+  BorderColor #1F618D
+  FontColor black
+  Style awesome
+}
+skinparam participant {
+  BackgroundColor #ECF0F1
+  BorderColor #7F8C8D
+  FontColor #2C3E50
+  BorderThickness 2
+  RoundCorner 20
+}
+skinparam sequence {
+  LifeLineBorderColor #2C3E50
+  LifeLineBackgroundColor #E8F6F3
+  LifeLineBorderThickness 2
+  ArrowColor #2C3E50
+  ArrowThickness 2
+}
+
+skinparam sequenceGroup {
+  BorderColor #1F618D
+  BackgroundColor #D6EAF8
+  FontColor #154360
+  FontSize 14
+}
+
+ 
+actor Conserje
+participant UI_BuscarHuesped as UI
+participant GestorHuesped
+participant HuespedDAO
+ 
+Conserje -> UI: Desea buscar huesped/es
+UI -> Conserje: Muestra formulario de busqueda
+Conserje -> UI: Ingresa criterios y presiona "Buscar"
+UI -> GestorHuesped: buscarHuesped(HuespedDTO)
+GestorHuesped -> HuespedDAO: obtenerHuesped(numeroDocumento)
+HuespedDAO --> GestorHuesped: list<Huesped>
+ 
+alt [a Husped/es no encontrado/s *list <null>*]
+
+  GestorHuesped -> UI : Navega a CU11 | Dar alta de Huésped
+
+end
+alt Conserje decide cancelar
+  Conserje -> UI : Cancelar proceso
+  UI -> Conserje : Solicita confirmación (pop-up)
+  Conserje -> UI : Confirma cancelación
+  UI -> Conserje : Muestra cancelación exitosa
+end
+
+GestorHuesped -> UI: mostrarDatosHuesped(list <HuespedDTO>)
+Conserje -> UI: Selecciona huésped y presiona "Siguiente"
+UI -> Conserje: Navega al CU10 | Modificar Huésped
+
+ 
+@enduml

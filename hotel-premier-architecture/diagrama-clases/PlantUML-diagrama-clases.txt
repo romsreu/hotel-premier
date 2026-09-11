@@ -1,0 +1,622 @@
+@startuml
+
+skinparam linetype ortho
+skinparam classFontColor #1a1a1a
+skinparam classBorderColor #4a90e2
+skinparam classBackgroundColor #f8f9fa
+skinparam classBorderThickness 2
+skinparam shadowing true
+skinparam ArrowThickness 3
+skinparam ArrowFontSize 16
+skinparam packageBackgroundColor #ffffff
+skinparam packageBorderColor #4a90e2
+skinparam packageBorderThickness 5
+skinparam stereotypeCBackgroundColor #e3f2fd
+skinparam noteBorderColor #4a90e2
+skinparam noteBackgroundColor #fff9e6
+skinparam noteFontSize 20
+skinparam nodesep 80
+skinparam ranksep 120
+top to bottom direction
+
+' Título del diagrama
+title 
+  <size:28><b>Hotel Premier - Diagrama de Clases</b></size>
+  <size:14>Grupo 24, DSI</size>
+end title
+
+' Nota sobre relaciones implícitas
+note as N1
+  <b>Nota1:</b> Las relaciones entre Gestores - DAOs y
+  DAO - DTOs están implícitas en los parámetros 
+  de los métodos. Se omiten flechas para 
+  claridad visual.
+end note
+
+note as N2
+  <b>Nota2:</b> El flujo de datos es:
+  Interfaz gráfica -> Gestor: envía DTOs
+  Interfaz gráfica <- Gestor: recibe ENTIDADES
+  Gestor -> DAO: envía ENTIDADES
+  Gestor <- DAO: recibe ENTIDADES
+end note
+
+' ===================== CLASES GESTORES =====================
+
+package Gestores as G {
+class GestorHabitacion {
+  - habitacionDAO: HabitacionDAO
+  - tipoHabitacionDAO: TipoHabitacionDAO
+  - estadoHabitacionDAO: EstadoHabitacionDAO
+  - tipoEstadoDAO: TipoEstadoDAO
+  - estadiaDAO: EstadiaDAO
+  - reservaDAO: ReservaDAO
+  - gestorReserva: GestorReserva
+  
+  + GestorHabitacion(HabitacionDAO, TipoHabitacionDAO, EstadoHabitacionDAO, TipoEstadoDAO, EstadiaDAO, ReservaDAO)
+  + GestorHabitacion()
+  + setGestorReserva(GestorReserva): void
+  + crearTipoEstado(EstadoHab): TipoEstado
+  + existeTipoEstado(EstadoHab): boolean
+  + listarTiposEstado(): List<TipoEstado>
+  + crearTipoHabitacion(String, String, Integer, Double): TipoHabitacion
+  + buscarTipoHabitacionPorNombre(String): TipoHabitacion
+  + existeTipoHabitacion(String): boolean
+  + listarTiposHabitacion(): List<TipoHabitacion>
+  + crearHabitacion(HabitacionDTO): void
+  + obtenerHabitacionesDisponibles(LocalDate, LocalDate): List<HabitacionDTO>
+  + obtenerHabitacion(Integer): HabitacionDTO
+  + obtenerTodasHabitaciones(): List<HabitacionDTO>
+  + obtenerHabitacionesPorTipo(TipoHabitacion): List<HabitacionDTO>
+  + obtenerHabitacionesPorEstado(EstadoHab): List<HabitacionDTO>
+  + actualizarHabitacion(HabitacionDTO): void
+  + eliminarHabitacion(Integer): void
+  + listarTodasHabitaciones(): List<Habitacion>
+  + reservarHabitaciones(Set<Integer>, LocalDate, LocalDate): void
+  + ocuparHabitaciones(Set<Integer>, LocalDate, LocalDate): void
+  + liberarHabitaciones(Set<Integer>): void
+  + ponerEnMantenimiento(Set<Integer>, LocalDate, LocalDate): void
+  + obtenerEstadoActual(Integer): EstadoHab
+  + obtenerEstadoEn(Integer, LocalDate): EstadoHab
+  + obtenerEstadosEnRango(List<Integer>, LocalDate, LocalDate): Map<String, EstadoHab>
+  + realizarCheckIn(Long): EstadiaDTO
+  + realizarCheckOut(Integer): EstadiaDTO
+  + crearEstadiaDirecta(Reserva): EstadiaDTO
+  + listarEstadiasActivas(): List<EstadiaDTO>
+  + listarEstadiasPorHabitacion(Integer): List<EstadiaDTO>
+  + listarEstadiasPorFechas(LocalDate, LocalDate): List<EstadiaDTO>
+  + buscarEstadiaPorReserva(Long): EstadiaDTO
+  - crearEstadoInicial(Habitacion): void
+  - cambiarEstadoHabitacion(Integer, EstadoHab, LocalDate, LocalDate): void
+  - toDTO(Habitacion): HabitacionDTO
+  - toEstadiaDTO(Estadia): EstadiaDTO
+  - buscarTipoHabitacion(String): TipoHabitacion
+  - validarHabitacionDTO(HabitacionDTO): void
+  - validarParametrosReserva(Set<Integer>, LocalDate, LocalDate): void
+}
+  
+  class GestorContable {
+    +facturar(estadia: Estadia, responsable: ResponsableDePago): Factura
+    +ingresarPago(factura: Factura, pagos: List<Pago>): void
+    +ingresarNotaCredito(facturas: List<Factura>): NotaDeCredito
+    +listarIngresos(desde: Date, hasta: Date): List<Pago>
+    +listarCheques (desde: Date, hasta: Date): List<Cheque>
+    +gestionarListados (fechaDesde: Date, fechaHasta: Date, pago: medioDePago): List <Cheque>
+  }
+  
+class GestorReserva {
+  - reservaDAO: ReservaDAO
+  - huespedDAO: HuespedDAO
+  - gestorHabitacion: GestorHabitacion
+  
+  + GestorReserva(ReservaDAO, HuespedDAO)
+  + GestorReserva()
+  + setGestorHabitacion(GestorHabitacion): void
+  + crearReserva(CrearReservaDTO): ReservaDTO
+  + crearReservasMultiples(List<CrearReservaDTO>): List<ReservaDTO>
+  + obtenerReserva(Long): ReservaDTO
+  + obtenerReservaEntidad(Long): Reserva
+  + listarReservas(): List<ReservaDTO>
+  + obtenerReservasPorHuesped(Long): List<ReservaDTO>
+  + obtenerReservasPorFechas(LocalDate, LocalDate): List<ReservaDTO>
+  + obtenerReservasPorHabitacion(Integer): List<ReservaDTO>
+  + cancelarReserva(Long): void
+  + buscarReservaPorHabitacionYFecha(Integer, LocalDate): Reserva
+  + buscarReservasActivasPorHabitacion(Integer): List<ReservaDTO>
+  - toDTO(Reserva): ReservaDTO
+  - validarCrearReservaDTO(CrearReservaDTO): void
+}
+  
+ class GestorHuesped {
+  - direccionDAO: DireccionDAO
+  - huespedDAO: HuespedDAO
+  
+  + GestorHuesped()
+  + GestorHuesped(DireccionDAO, HuespedDAO)
+  + cargar(DarAltaHuespedDTO): Huesped
+  + buscarHuesped(HuespedDTO): List<Huesped>
+  + buscarPorNombreApellido(String, String): List<Huesped>
+  + buscarPorNombreApellidoDocumento(String, String, String): List<Huesped>
+  + buscarPorDocumento(String, String): List<Huesped>
+  + buscarPorEmail(String): List<Huesped>
+  + buscarPorTelefono(String): List<Huesped>
+  + obtenerPorId(Long): Huesped
+  + obtenerTodos(): List<Huesped>
+  + actualizar(Huesped): void
+  + eliminar(Long): void
+}
+  
+  class GestorResponsableDePago {
+   +darAltaRDP(rdp: ResponsableDePago): boolean
+   +buscarRDP (rdp: ResponsableDePago): boolean
+   +darDeBajaRDP (rdp: ResponsableDePago): boolean
+   +modificarRDP (rdp: ResponsableDePago): boolean
+  }
+}
+
+' ===================== INTERFACES DAO =====================
+
+package Persistencia as P {
+  interface EstadiaDAO {
+  + guardar(Estadia): Estadia
+  + buscarPorId(Integer): Estadia
+  + buscarPorReserva(Long): Estadia
+  + listarTodas(): List<Estadia>
+  + listarActivas(): List<Estadia>
+  + listarPorHabitacion(Integer): List<Estadia>
+  + listarPorFechas(LocalDate, LocalDate): List<Estadia>
+  + actualizar(Estadia): void
+  + eliminar(Integer): void
+  + crearDesdeReserva(Reserva): Estadia
+}
+
+interface TipoHabitacionDAO {
+  + guardar(TipoHabitacion): TipoHabitacion
+  + buscarPorId(Integer): TipoHabitacion
+  + buscarPorNombre(String): TipoHabitacion
+  + listarTodos(): List<TipoHabitacion>
+  + actualizar(TipoHabitacion): void
+  + eliminar(Integer): void
+  + existeNombre(String): boolean
+  + buscarPorCapacidad(Integer): List<TipoHabitacion>
+  + buscarPorRangoPrecio(Double, Double): List<TipoHabitacion>
+}
+
+interface HabitacionDAO {
+  + guardar(Habitacion): Habitacion
+  + buscarPorNumero(Integer): Habitacion
+  + listarTodas(): List<Habitacion>
+  + listarPorRangoDeFechas(LocalDate, LocalDate): List<Habitacion>
+  + buscarPorTipo(TipoHabitacion): List<Habitacion>
+  + buscarPorEstado(EstadoHab): List<Habitacion>
+  + buscarDisponibles(): List<Habitacion>
+  + actualizar(Habitacion): void
+  + eliminar(Integer): void
+  + reservarHabitaciones(Set<Integer>, LocalDate, LocalDate): void
+  + ocuparHabitaciones(Set<Integer>, LocalDate, LocalDate): void
+  + existeNumero(Integer): boolean
+  + contarPorTipo(TipoHabitacion): Long
+}
+
+interface HuespedDAO {
+  + guardar(Huesped): Huesped
+  + obtenerPorId(Long): Huesped
+  + obtenerTodos(): List<Huesped>
+  + actualizar(Huesped): void
+  + eliminar(Long): void
+  + existePorDocumento(String, String): boolean
+  + buscarHuesped(HuespedDTO): List<Huesped>
+}
+
+interface ReservaDAO {
+  + crearReserva(CrearReservaDTO): Reserva
+  + obtenerPorId(Long): Reserva
+  + obtenerTodas(): List<Reserva>
+  + obtenerPorHuesped(Long): List<Reserva>
+  + obtenerPorFechas(LocalDate, LocalDate): List<Reserva>
+  + obtenerPorHabitacion(Integer): List<Reserva>
+  + actualizar(Reserva): void
+  + eliminar(Long): void
+}
+
+interface DireccionDAO {
+  + guardar(Direccion): Direccion
+  + buscarPorDatos(String, String, String, String, String, String, String, String): Direccion
+}
+
+interface TipoEstadoDAO {
+  + guardar(TipoEstado): TipoEstado
+  + buscarPorId(Integer): TipoEstado
+  + buscarPorEstado(EstadoHab): TipoEstado
+  + listarTodos(): List<TipoEstado>
+  + actualizar(TipoEstado): void
+  + eliminar(Integer): void
+  + existeEstado(EstadoHab): boolean
+}
+
+interface EstadoHabitacionDAO {
+  + guardar(EstadoHabitacion): EstadoHabitacion
+  + buscarPorId(Integer): EstadoHabitacion
+  + listarTodos(): List<EstadoHabitacion>
+  + listarPorHabitacion(Integer): List<EstadoHabitacion>
+  + listarActivos(): List<EstadoHabitacion>
+  + listarPorTipoEstado(EstadoHab): List<EstadoHabitacion>
+  + obtenerEstadoActual(Integer): EstadoHabitacion
+  + obtenerEstadoEn(Integer, LocalDate): EstadoHabitacion
+  + actualizar(EstadoHabitacion): void
+  + eliminar(Integer): void
+  + obtenerEstadosEnRango(List<Integer>, LocalDate, LocalDate): Map<String, EstadoHab>
+}
+
+interface ResponsableDePagoDAO {
+  + crearResponsableDePago(responsable: ResponsableDePagoDTO): ResponsableDePago
+  + modificarResponsableDePago(responsable: ResponsableDePagoDTO): void
+  + eliminarResponsableDePago(id: int): void
+  + obtenerResponsableDePago(id: int): ResponsableDePagoDTO
+}
+
+interface FacturaDAO {
+  + crearFactura(factura: FacturaDTO): Factura
+  + modificarHuesped(factura: FacturaDTO): void
+  + eliminarHuesped(numero: int): void
+  + obtenerHuesped(numero: int): FacturaDTO
+}
+
+interface PersonaDAO {
+  + crearPersona(persona: PersonaDTO): Persona
+  + modificarPersona(persona: PersonaDTO): void
+  + eliminarPersona(numeroDocumento: int): void
+  + obtenerPersona(numeroDocumento: int): PersonaDTO
+}
+
+interface PagoDAO {
+  + crearPago(pago: PagoDTO): Pago
+  + modificarPago(pago: PagoDTO): void
+  + eliminarPago(numero: int): void
+  + obtenerPago(numero: int): PagoDTO
+}
+
+interface MedioDePagoDAO {
+  + crearMedioDePago(medio: MedioDePagoDTO): MedioDePago
+  + modificarMedioDePago(medio: MedioDePagoDTO): void
+  + eliminarMedioDePago(id: int): void
+  + obtenerMedioDePago(id: int): MedioDePagoDTO
+}
+
+interface UsuarioDAO {
+  + crearUsuario(usuario: UsuarioDTO): Usuario
+  + modificarUsuario(usuario: UsuarioDTO): void
+  + eliminarUsuario(nombre: String): void
+  + obtenerUsuario(nombre: String): UsuarioDTO
+  + autenticarUsuario(nombre: String, pass: String): boolean
+}
+}
+
+' ===================== DTOs =====================
+
+package DTOs as D {
+  class EstadiaDTO {
+    -id: int
+    -fechaDesde: Date
+    -fechaHasta: Date
+    -horaCheckIn: Time
+    -horaCheckOut: Time
+    -responsable: ResponsableDePagoDTO
+  }
+  
+  class HabitacionDTO {
+    -tipo: TipoHabitacionDTO
+    -numero: int
+    -estado: EstadoHabitacion
+    -piso: int
+  }
+  
+  class PersonaDTO {
+    -nombre: String
+    -apellido: String
+    -tipoDocumento: String
+    -numeroDocumento: int
+  }
+  
+  class HuespedDTO {
+    -persona: PersonaDTO
+    -telefono: int
+    -fechaNacimiento: Date
+    -email: String
+    -ocupacion: String
+    -posicionIVA: TipoIVA
+    -nacionalidad: String
+    -direccion: DireccionDTO
+    
+  }
+  
+  class DireccionDTO {
+    -id: int
+    -calle: String
+    -numero: int
+    -departamento: String
+    -piso: int
+    -cod_postal: int
+    -localidad: String
+    -provincia: String
+    -pais: String
+  }
+  
+  class ResponsableDePagoDTO {
+    -id: int 
+    -razonSocial: String
+    -cuit: String
+    -direccion: DireccionDTO
+    -telefono: int
+    -esPersonaJuridica: bool
+  }
+  
+  class FacturaDTO {
+    -numero: int
+    -fechaEmision: Date
+    -tipo: char
+    -estado: String
+    -precioTotal: float
+  }
+  
+  class ReservaDTO {
+    -id: int
+    -fechaDesde: Date
+    -fechaHasta: Date
+    -cantHuespedes: int
+  }
+  
+  class TipoHabitacionDTO {
+    -nombre: string
+    -descripcion: string
+    -capacidad: int
+    -costoBasePorNoche: float
+  }
+  
+
+  class PagoDTO {
+    -numero: int
+    -fecha: Date
+    -monto: float
+    -cotizacion: float
+    -moneda: string
+  }
+  
+  abstract class MedioDePagoDTO {
+    + id: int
+  }
+   
+  class TarjetaCreditoDTO {
+    + marca: String
+    + bancoEmisor: String
+  }
+   
+  class TarjetaDebitoDTO {
+    + marca: String
+    + bancoEmisor: String
+  }
+   
+  class ChequeDTO {
+    + nroCheque: String
+    + banco: String
+    + plaza: String
+    + fechaCobro: Date
+    + esPropio: boolean
+  }
+  
+  class UsuarioDTO {
+    -nombre: String
+    -pass: String
+  }
+}
+
+' ===================== MODELO DE DOMINIO =====================
+
+package Dominio {
+  class Persona {
+    -nombre: String
+    -apellido: String
+    -tipoDocumento: TipoDocumento
+    -numeroDocumento: int
+    
+  }
+  
+  class Usuario {
+    -nombre: String
+    -pass: String
+  }
+  
+  class Huesped extends Persona{
+    -telefono: int
+    -fechaNacimiento: Date
+    -email: String
+    -ocupacion: String
+    -posicionIVA: TipoIVA
+    -nacionalidad: String
+    +esMayorDeEdad(): bool
+  }
+  
+  class Direccion {
+    -id: int
+    -calle: String
+    -numero: int
+    -departamento: String
+    -piso: int
+    -codPostal: int
+    -localidad: String
+    -provincia: String
+    -pais: String
+    +actualizarDireccion(calle: string, numero: int, departamento:string, piso: int, codPostal: int, localidad:string, provincia:string, pais, string): void
+    +consultarDatos(calle: string, numero: int, codPostal: int): String
+  }
+  
+  class Reserva {
+    -id: int
+    -fechaDesde: Date
+    -fechaHasta: Date
+    -cantHuespedes: int
+  }
+  
+  
+  class Estadia {
+    -id: int
+    -fechaDesde: Date
+    -fechaHasta: Date
+    -horaCheckIn: Time
+    -horaCheckOut: Time
+    -responsable: ResponsableDePago
+    +getDuracion(fechaDesde:Date, fechaHasta:Date): int
+    +calcularExtra(consumo:Consumo[]): float
+  }
+  
+  class Consumo {
+    -nombre: TipoConsumo
+    -costo: float
+  }
+  
+  class Habitacion {
+    -numero: int
+    -estado: EstadoHabitacion
+    -piso: int
+  }
+  
+  class TipoHabitacion {
+    -nombre: String
+    -descripcion: String
+    -capacidad: int
+    -costoBasePorNoche: float
+  }
+  
+  class EstadoHabitacion {
+    - fechaDesde: Date
+    - fechaHasta: Date
+  }
+  
+  class Factura {
+    -numero: int
+    -fechaEmision: Date
+    -tipo: char
+    -estado: String
+    -precioTotal: float
+    +imprimirFactura(): void
+    +estaPendienteDePago(): bool
+    +obtenerMontoTotal(): float
+  }
+  
+  class DetalleFactura {
+    -concepto: String
+    -cantidad: int
+    -precioUnitario: float
+    -precioTotal: float
+    +agregarConsumo(consumo: Consumo): void
+    +calcularTotal(): float
+  }
+  
+  class NotaDeCredito {
+    -numero: int
+    -fecha: Date
+  }
+  
+  class Pago {
+  - numero: int
+  - fecha: Date
+  - monto: float
+  - cotizacion: float
+  - moneda: String
+  }
+  
+  class ResponsableDePago {
+    -razonSocial: String
+    -cuit: String
+    -direccion: Direccion
+    -telefono: int
+    -esPersonaJuridica: bool
+  }
+  
+  abstract class MedioDePago {
+    -id: int
+  }
+  
+  class TarjetaDeDebito extends MedioDePago {
+    -marca: String
+    -bancoEmisor: String
+  }
+  
+  class TarjetaDeCredito extends  MedioDePago {
+    -marca: String
+    -bancoEmisor: String
+  }
+  
+  class Cheque extends MedioDePago {
+    - nroCheque: String
+    - banco: String
+    - plaza: String
+    - fechaCobro: Date
+    - esPropio: boolean
+  }
+  
+  class TipoEstado {
+  - estado: EstadoHab
+  } 
+  
+  class RegistroEstadoHabitacion {
+  fechaDesde: Date
+  fechaHasta: Date
+  }
+  
+  ' ===================== ENUMERACIONES =====================
+  enum TipoDocumento {
+    DNI
+    LE
+    LC
+    Pasaporte
+    Otro
+  }
+  
+  enum EstadoHab {
+   LIBRE
+   OCUPADA
+   RESERVADA
+   MANTENIMIENTO
+  }
+  
+  enum TipoIVA {
+    CONSUMIDOR_FINAL
+    RESPONSABLE_INSCRIPTO
+  }
+  
+  enum TipoConsumo {
+   LAVADO Y PLANCHADO
+   BAR
+   SAUNA
+  }
+}
+
+
+' ===================== RELACIONES DE DOMINIO =====================
+
+Huesped "1" -- "1" Estadia
+Huesped "1..*" --right- "1" Direccion : tiene
+
+Reserva "0..*" --up- "1" Persona
+Reserva "0..*" -- "1..*" Habitacion
+Reserva "0..1" -- "1" Estadia : se transforma
+Estadia "0..*" -- "1..*" Habitacion
+(Estadia,Habitacion)...Factura
+Estadia "0..*" -up- "0..*" Consumo
+Habitacion "0..*" -right- "1" TipoHabitacion : es
+Habitacion "0..*" -- "1..*" EstadoHabitacion 
+EstadoHabitacion "1..*" -- "1..*" TipoEstado 
+Factura "1..*" *-- "1..*" DetalleFactura
+Factura "1..*" -- "0..1" NotaDeCredito : cancela
+Factura "1..*" -up- "0..*" Pago : esCancelada
+Factura "1..*" -- "1..*" ResponsableDePago
+
+Pago "1" -- "1..*" MedioDePago
+
+EstadoHab -[#hidden]- MedioDePagoDTO
+MedioDePagoDTO <|-- TarjetaCreditoDTO
+MedioDePagoDTO <|-- TarjetaDebitoDTO
+MedioDePagoDTO <|-- ChequeDTO
+
+@enduml

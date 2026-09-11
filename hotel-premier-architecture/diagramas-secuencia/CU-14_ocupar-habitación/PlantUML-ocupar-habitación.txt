@@ -1,0 +1,156 @@
+@startuml
+title
+<size:28><color:#1F4E79><b>CU-15 | Ocupar Habitación</b></color></size>
+<size:12><color:#4A6A85>GRUPO 24 - DSI</color></size>
+end title
+skinparam backgroundColor #F2F4F7-#E9EEF3
+skinparam shadowing true
+skinparam defaultFontName Arial
+skinparam defaultFontSize 14
+skinparam defaultFontColor #2C3E50
+skinparam actor {
+  BackgroundColor #3498DB
+  BorderColor #1F618D
+  FontColor black
+  Style awesome
+}
+skinparam participant {
+  BackgroundColor #ECF0F1
+  BorderColor #7F8C8D
+  FontColor #2C3E50
+  BorderThickness 2
+  RoundCorner 20
+}
+skinparam sequence {
+  LifeLineBorderColor #2C3E50
+  LifeLineBackgroundColor #E8F6F3
+  LifeLineBorderThickness 2
+  ArrowColor #2C3E50
+  ArrowThickness 2
+}
+skinparam sequenceGroup {
+  BorderColor #1F618D
+  BackgroundColor #D6EAF8
+  FontColor #154360
+  FontSize 14
+}
+'====================================='
+
+actor Conserje
+participant "UI_OcuparHab1" as UI1
+participant "UI_EstadoHabs" as UIEstado
+participant "UI_OcuparHab2" as UI2
+participant "GestorHuesped" as GestorH
+participant "GestorReserva" as GestorR
+participant "GestorHabitacion" as GestorHab
+participant "HuespedDAO" as HuespedDAO
+participant "ReservaDAO" as ReservaDAO
+
+Conserje -> UIEstado : Solicita ocupar habitación
+UIEstado -> Conserje : Muestra estado de habitaciones (CU-05)
+
+alt No hay habitaciones disponibles o reservadas
+  UIEstado -> Conserje : Vuelve al menú principal
+end
+
+Conserje -> UIEstado : Selecciona habitación(es) DISPONIBLE o RESERVADA
+
+alt Habitación seleccionada RESERVADA
+  UIEstado -> GestorR : buscarReservaPorHabitacionYFecha(numero, fecha)
+  GestorR -> ReservaDAO : obtenerPorHabitacion(numero)
+  ReservaDAO --> GestorR : List<Reserva>
+  GestorR --> UIEstado : Reserva
+  
+  UIEstado -> Conserje : Muestra advertencia con datos de la reserva
+  
+  note right of UIEstado
+    Muestra:
+    - Número de habitación
+    - Cliente de la reserva
+    - Fechas de reserva
+    - Pregunta si desea ocupar de todos modos
+  end note
+  
+  Conserje -> UIEstado : Confirma "Ocupar igual"
+end
+
+UIEstado -> UIEstado : Marca habitaciones seleccionadas
+
+UIEstado -> UI1 : Navega a búsqueda de huésped (pasa habitaciones)
+
+UI1 -> Conserje : Muestra campos: nombre, apellido, DNI
+
+loop Hasta ingresar datos válidos
+  Conserje -> UI1 : Ingresa criterios de búsqueda
+  
+  alt Campos vacíos
+    UI1 -> Conserje : Muestra advertencia
+  end
+end
+
+Conserje -> UI1 : Presiona "Aceptar"
+
+UI1 -> GestorH : buscarHuesped(HuespedDTO)
+GestorH -> HuespedDAO : buscarHuesped(HuespedDTO)
+HuespedDAO --> GestorH : List<Huesped>
+
+alt No se encontraron huéspedes
+  GestorH --> UI1 : Lista vacía
+  UI1 -> Conserje : Muestra advertencia "No encontrado"
+  UI1 -> Conserje : Vuelve a búsqueda
+end
+
+GestorH --> UI1 : List<Huesped>
+
+UI1 -> UI2 : Navega a selección (pasa huéspedes encontrados)
+
+UI2 -> Conserje : Muestra grilla con huéspedes encontrados
+
+alt Usuario presiona "Aceptar" sin seleccionar
+  UI2 -> Conserje : Muestra advertencia
+end
+
+Conserje -> UI2 : Selecciona huésped
+
+Conserje -> UI2 : Presiona "Aceptar"
+
+UI2 -> Conserje : Muestra confirmación con resumen
+
+Conserje -> UI2 : Confirma ocupación
+
+loop Por cada habitación seleccionada
+  UI2 -> GestorR : buscarReservaPorHabitacionYFecha(numero, fecha)
+  GestorR -> ReservaDAO : obtenerPorHabitacion(numero)
+  ReservaDAO --> GestorR : List<Reserva>
+  GestorR --> UI2 : Reserva o null
+  
+  alt No existe reserva
+    UI2 -> GestorR : crearReserva(CrearReservaDTO)
+    
+    note right of GestorR
+      Crea reserva para el huésped
+      seleccionado en la habitación
+    end note
+    
+    GestorR -> ReservaDAO : crearReserva(dto)
+    ReservaDAO --> GestorR : Reserva
+    GestorR -> GestorR : reservarHabitaciones(numero, fechas)
+    GestorR --> UI2 : ReservaDTO
+  end
+  
+  UI2 -> GestorHab : realizarCheckIn(idReserva)
+  
+  note right of GestorHab
+    Crea Estadia desde la Reserva
+    y cambia estado a OCUPADA
+  end note
+  
+  GestorHab -> GestorHab : estadiaDAO.crearDesdeReserva(reserva)
+  GestorHab -> GestorHab : ocuparHabitaciones(numero, fechas)
+  GestorHab --> UI2 : EstadiaDTO
+end
+
+UI2 -> Conserje : Muestra confirmación exitosa
+UI2 -> Conserje : Vuelve al menú principal
+
+@enduml

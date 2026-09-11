@@ -1,0 +1,76 @@
+@startuml
+title
+<size:28><color:#1F4E79><b>CU-02 | Buscar Huésped</b></color></size>
+<size:12><color:#4A6A85>GRUPO 24 - DSI</color></size>
+end title
+skinparam backgroundColor #F2F4F7-#E9EEF3
+skinparam shadowing true
+skinparam defaultFontName Arial
+skinparam defaultFontSize 14
+skinparam defaultFontColor #2C3E50
+
+skinparam actor {
+  BackgroundColor #3498DB
+  BorderColor #1F618D
+  FontColor black
+  Style awesome
+}
+skinparam participant {
+  BackgroundColor #ECF0F1
+  BorderColor #7F8C8D
+  FontColor #2C3E50
+  BorderThickness 2
+  RoundCorner 20
+}
+skinparam sequence {
+  LifeLineBorderColor #2C3E50
+  LifeLineBackgroundColor #E8F6F3
+  LifeLineBorderThickness 2
+  ArrowColor #2C3E50
+  ArrowThickness 2
+}
+
+skinparam sequenceGroup {
+  BorderColor #1F618D
+  BackgroundColor #D6EAF8
+  FontColor #154360
+  FontSize 14
+}
+
+ 
+actor Usuario
+participant UI_BuscarHuesped as UI
+participant GestorHuesped
+participant HuespedDAO
+ 
+Usuario -> UI: Desea buscar huesped/es
+UI -> Usuario: Muestra formulario de búsqueda
+alt Usuario decide cancelar
+  Usuario -> UI : Presiona botón "CANCELAR"
+  UI -> Usuario : Dirige al menú principal
+end
+Usuario -> UI: Ingresa criterios y presiona "Buscar"
+UI -> GestorHuesped: buscarHuesped(BuscarHuespedDTO)
+GestorHuesped -> HuespedDAO: buscarHuesped(BuscarHuespedDTO)
+HuespedDAO --> GestorHuesped: list<Huesped>
+GestorHuesped --> UI : list<Huesped>
+ 
+alt Husped/es no encontrado/s 
+
+  UI -> Usuario : Muestra pop-up: Ningún huésped se ajusta a los criterios de búsqueda
+  Usuario -> UI : Acepta pop-up
+  UI -> Usuario: Dirige a CU11 | Dar Alta de Huésped
+end
+
+
+
+UI -> Usuario: Muestra tabla con los huéspedes encontrados
+alt Usuario decide cancelar
+  Usuario -> UI : Presiona botón "CANCELAR"
+  UI -> Usuario : Dirige al formulario de búsqueda
+end
+Usuario -> UI: Selecciona huésped y presiona "Siguiente"
+UI -> Usuario: Navega al CU10 | Modificar Huésped
+
+ 
+@enduml
